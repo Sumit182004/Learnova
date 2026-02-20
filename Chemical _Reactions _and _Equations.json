@@ -1,0 +1,229 @@
+{
+  "class": "10",
+  "subject": "science",
+  "chapter": "Chemical Reactions and Equations",
+
+  "topics": [
+
+    {
+      "id": "introduction",
+      "title": "Introduction to Chemical Reactions",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "A chemical reaction is a process in which one or more substances undergo a chemical change to form new substances with different properties."
+        },
+        {
+          "type": "theory",
+          "text": "Indicators of a chemical reaction include change in colour, evolution of gas, temperature change, and formation of precipitate."
+        },
+        {
+          "type": "activity",
+          "title": "Burning Magnesium Ribbon",
+          "description": "Clean magnesium ribbon and burn it in air. A bright white flame is produced and white magnesium oxide powder is formed."
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fscience-I%2FBurning%20Magnesium.png?alt=media&token=9282b766-e156-4194-aa79-f76382627101",
+          "caption": "Burning of Magnesium Ribbon"
+        }
+      ]
+    },
+
+    {
+      "id": "chemical_equations",
+      "title": "Writing Chemical Equations",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "A chemical equation is the symbolic representation of a chemical reaction showing reactants and products using chemical formulas."
+        },
+        {
+          "type": "example",
+          "question": "Write the word equation for burning magnesium.",
+          "solution": "Magnesium + Oxygen → Magnesium Oxide"
+        },
+        {
+          "type": "formula",
+          "latex": "2Mg + O_2 → 2MgO",
+          "description": "Balanced chemical equation for burning magnesium"
+        }
+      ]
+    },
+
+    {
+      "id": "balanced_equations",
+      "title": "Balanced Chemical Equations",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "Chemical equations must be balanced according to the law of conservation of mass so that the number of atoms of each element is equal on both sides."
+        },
+        {
+          "type": "example",
+          "question": "Balance the equation: Fe + H2O → Fe3O4 + H2",
+          "solution": "3Fe + 4H2O → Fe3O4 + 4H2"
+        }
+      ]
+    },
+
+    {
+      "id": "types_reactions",
+      "title": "Types of Chemical Reactions",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "Chemical reactions are classified into combination, decomposition, displacement, double displacement and oxidation-reduction reactions."
+        }
+      ]
+    },
+
+    {
+      "id": "combination_reactions",
+      "title": "Combination Reactions",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "In a combination reaction, two or more substances combine to form a single product."
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fscience-I%2FCombination%20reaction.png?alt=media&token=5ff5b7a1-b1f1-47c8-8f17-70e49608e2b8",
+          "caption": "Calcium oxide reacting with water"
+        },
+        {
+          "type": "example",
+          "question": "Give an example of a combination reaction.",
+          "solution": "CaO + H2O → Ca(OH)2"
+        }
+      ]
+    },
+
+    {
+      "id": "decomposition_reactions",
+      "title": "Decomposition Reactions",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "In decomposition reactions, a single compound breaks down into two or more simpler substances."
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fscience-I%2FHeating%20ferrous%20sulphate%20crystals.png?alt=media&token=d60c6caa-2eea-4944-b2ec-046988273282",
+          "caption": "Heating ferrous sulphate crystals"
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fscience-I%2FElectrolysis%20of%20water%20apparatus.png?alt=media&token=84ecf66b-fe6b-4dc6-b59c-c396d08bf2bf",
+          "caption": "Electrolysis of water"
+        },
+        {
+          "type": "example",
+          "question": "Give an example of thermal decomposition.",
+          "solution": "CaCO3 → CaO + CO2"
+        },
+        {
+          "type": "theory",
+          "text": "Decomposition reactions can be thermal, electrolytic, or photochemical depending on the source of energy used."
+        }
+      ]
+    },
+
+    {
+      "id": "displacement_reactions",
+      "title": "Displacement Reactions",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "A displacement reaction occurs when a more reactive element replaces a less reactive element from its compound."
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fscience-I%2FIron%20nails%20dipped%20in%20copper%20sulphate%20solution.png?alt=media&token=b4b4cea9-649a-469e-b871-440db7df0395",
+          "caption": "Iron nail in copper sulphate solution"
+        },
+        {
+          "type": "example",
+          "question": "What happens when iron is placed in copper sulphate solution?",
+          "solution": "Fe + CuSO4 → FeSO4 + Cu"
+        }
+      ]
+    },
+
+    {
+      "id": "double_displacement",
+      "title": "Double Displacement Reactions",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "In double displacement reactions, ions exchange between two compounds resulting in formation of new compounds."
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fscience-I%2FFormation%20of%20precipitate.png?alt=media&token=b674c94c-f13e-4d46-9602-de746e4c6536",
+          "caption": "Precipitation reaction forming silver chloride"
+        },
+        {
+          "type": "example",
+          "question": "Example of precipitation reaction.",
+          "solution": "AgNO3 + NaCl → AgCl ↓ + NaNO3"
+        }
+      ]
+    },
+
+    {
+      "id": "oxidation_reduction",
+      "title": "Oxidation and Reduction",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "Oxidation involves addition of oxygen or removal of hydrogen, while reduction involves removal of oxygen or addition of hydrogen."
+        },
+        {
+          "type": "example",
+          "question": "Identify oxidation and reduction in reaction: CuO + H2 → Cu + H2O",
+          "solution": "CuO is reduced to Cu and H2 is oxidized to H2O."
+        }
+      ]
+    },
+
+    {
+      "id": "corrosion",
+      "title": "Corrosion",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "Corrosion is the gradual destruction of metals due to reaction with moisture, air or chemicals. Rusting of iron is a common example."
+        }
+      ]
+    },
+
+    {
+      "id": "rancidity",
+      "title": "Rancidity",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "Rancidity refers to oxidation of fats and oils resulting in unpleasant smell and taste. It can be prevented using antioxidants or airtight packaging."
+        }
+      ]
+    },
+
+    {
+      "id": "exercise",
+      "title": "Exercise Questions",
+      "blocks": [
+        {
+          "type": "exercise",
+          "questions": [
+            "Why should a magnesium ribbon be cleaned before burning?",
+            "Write balanced equation for rusting of iron.",
+            "Identify oxidation and reduction in given reactions.",
+            "Give examples of combination and decomposition reactions."
+          ]
+        }
+      ]
+    }
+
+  ]
+}

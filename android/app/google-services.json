@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "447541530000",
+    "project_id": "learnova-f92fd",
+    "storage_bucket": "learnova-f92fd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:447541530000:android:f5dfa76d411c5bddf0f715",
+        "android_client_info": {
+          "package_name": "com.example.learnova"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "447541530000-396e8ukeb04q3rlehvgkol39br2oeclg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.learnova",
+            "certificate_hash": "0301257968b28adb72b086cc1ed6c705465a7931"
+          }
+        },
+        {
+          "client_id": "447541530000-br5h1s4m3sl8et1du52p25nnkqcloub6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoxIGH6exuWDICl8NaGT3QzHgvf0ZE4sA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "447541530000-br5h1s4m3sl8et1du52p25nnkqcloub6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "447541530000-2foamficu11jsa1oubisela907f8ffp5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.learnova"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

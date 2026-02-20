@@ -1,0 +1,14 @@
+{
+  "Class 10": {
+    "Science": ["Physics", "Chemistry", "Biology"],
+    "Maths": ["Algebra", "Geometry"],
+    "English": ["Grammar", "Literature"],
+    "Social Science": ["History", "Geography", "Civics"]
+  },
+
+  "Class 12": {
+    "Science (PCM)": ["Physics", "Chemistry", "Maths"],
+    "Science (PCB)": ["Physics", "Chemistry", "Biology"],
+    "Arts": ["History", "Geography", "Political Science", "Psychology"]
+  }
+}

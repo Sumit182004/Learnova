@@ -1,0 +1,1 @@
+ D:\\Learnova\\.dart_tool\\flutter_build\\23a8e3b1803ca2bce6d1b0b8fee2c8dd\\native_assets.yaml: 

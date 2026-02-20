@@ -1,0 +1,136 @@
+{
+  "class": "10",
+  "subject": "maths",
+  "chapter": "Real Numbers",
+
+  "topics": [
+    {
+      "id": "intro",
+      "title": "Introduction",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "In Class IX, you began your exploration of real numbers and encountered irrational numbers. In this chapter, we continue our discussion on real numbers and study important properties of positive integers."
+        },
+        {
+          "type": "theory",
+          "text": "We study Euclid’s Division Algorithm and the Fundamental Theorem of Arithmetic, which help us understand divisibility, prime factorisation, and properties of numbers."
+        }
+      ]
+    },
+
+    {
+      "id": "fta",
+      "title": "Fundamental Theorem of Arithmetic",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "Every composite number can be expressed as a product of primes, and this factorisation is unique apart from the order of the primes."
+        },
+
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Ffactor_tree.png?alt=media&token=e2d3c68f-f77f-488a-a2a0-a1a05cc00974",
+          "caption": "Factor Tree of 32760"
+        },
+
+        {
+          "type": "theory",
+          "text": "Using a factor tree, we can break a number step by step into its prime factors."
+        },
+
+        {
+          "type": "example",
+          "label": "Example 1",
+          "question": "Find the prime factorisation of 32760.",
+          "solution": "32760 = 2 × 2 × 2 × 3 × 3 × 5 × 7 × 13 = 2³ × 3² × 5 × 7 × 13"
+        },
+
+        {
+          "type": "theorem",
+          "title": "Fundamental Theorem of Arithmetic",
+          "statement": "Every composite number can be expressed as a product of primes, and this factorisation is unique apart from the order."
+        }
+      ]
+    },
+
+    {
+      "id": "hcf-lcm",
+      "title": "HCF and LCM using Prime Factorisation",
+      "blocks": [
+        {
+          "type": "formula",
+          "latex": "HCF(a,b) \\times LCM(a,b) = a \\times b",
+          "description": "Relation between HCF and LCM"
+        },
+
+        {
+          "type": "example",
+          "label": "Example 2",
+          "question": "Find the HCF and LCM of 6 and 20.",
+          "solution": "6 = 2 × 3, 20 = 2² × 5. HCF = 2, LCM = 60."
+        }
+      ]
+    },
+
+    {
+      "id": "irrational-proof",
+      "title": "Proof of Irrational Numbers",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "A number is irrational if it cannot be written in the form p/q where p and q are integers and q ≠ 0."
+        },
+
+        {
+          "type": "proof",
+          "title": "Proof that √2 is Irrational",
+          "steps": [
+            "Assume √2 is rational.",
+            "Then √2 = a/b where a and b are coprime.",
+            "Squaring both sides gives 2b² = a².",
+            "This implies 2 divides a and b, which is a contradiction.",
+            "Hence √2 is irrational."
+          ]
+        },
+
+        {
+          "type": "proof",
+          "title": "Proof that √3 is Irrational",
+          "steps": [
+            "Assume √3 = a/b where a and b are coprime.",
+            "Squaring gives 3b² = a².",
+            "So 3 divides a and b, contradiction.",
+            "Hence √3 is irrational."
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "exercise",
+      "title": "Exercise 1.1",
+      "blocks": [
+        {
+          "type": "exercise",
+          "questions": [
+            "Express 140 as a product of its prime factors.",
+            "Find the HCF and LCM of 26 and 91.",
+            "Check whether 6ⁿ can end with digit 0 for any n."
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "summary",
+      "title": "Chapter Summary",
+      "blocks": [
+        {
+          "type": "summary",
+          "text": "Every composite number has a unique prime factorisation. The Fundamental Theorem of Arithmetic helps in finding HCF, LCM, and proving irrationality of numbers like √2 and √3."
+        }
+      ]
+    }
+  ]
+}

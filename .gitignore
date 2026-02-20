@@ -1,0 +1,12 @@
+# Flutter build files
+build/
+android/build/
+ios/build/
+
+# APK files
+*.apk
+
+# Python
+backend/.env
+__pycache__/
+*.pyc
