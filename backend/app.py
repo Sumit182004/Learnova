@@ -49,9 +49,13 @@ def normalize_subject(subject: str) -> str:
 def detect_topic_type(block_types: list) -> str:
     types = set(block_types)
 
-    # only exercise/summary — no AI needed
-    if types and types.issubset({"exercise", "summary"}):
-        return "skip"
+    # exercise topic — now gets AI explanation too
+    if "exercise" in types and "theory" not in types and "proof" not in types:
+        return "exercise"
+
+    # summary topic — now gets AI explanation too
+    if "summary" in types and len(types) == 1:
+        return "summary"
 
     # proof-based topic
     if "proof" in types:
@@ -65,7 +69,7 @@ def detect_topic_type(block_types: list) -> str:
     if "theorem" in types:
         return "theorem"
 
-    # activity/experiment topic (science)
+    # activity/experiment topic
     if "activity" in types:
         return "activity"
 
@@ -83,15 +87,13 @@ def detect_topic_type(block_types: list) -> str:
 # ── Build system prompt ────────────────────────────────────────────────────────
 def build_system_prompt(subject_type: str, topic_type: str, lang_instruction: str, has_images: bool) -> str:
 
-    # image instruction — added to ALL prompts if topic has images
-    # this tells AI to reference the diagram in its explanation
     image_note = ""
     if has_images:
         image_note = """
-IMPORTANT: This topic has diagrams/figures shown to the student.
+IMPORTANT: This topic has diagrams shown to the student.
 When you see [Diagram present in textbook: ...] in the content:
 - Reference the diagram naturally in your explanation
-- Say things like "as shown in the diagram", "refer to the figure", "looking at the diagram above"
+- Say things like "as shown in the diagram", "refer to the figure above"
 - Connect your explanation to what the diagram shows
 """
 
@@ -110,7 +112,57 @@ STRICT RULES:
     # ── MATHS prompts ──────────────────────────────────────────────────────────
     if subject_type == "maths":
 
-        if topic_type == "proof":
+        if topic_type == "exercise":
+            return base + """
+This is an EXERCISE topic. Your job is to:
+1. Explain the approach and method to solve these types of questions
+2. Show ONE fully solved example with clear steps
+3. Do NOT solve all questions — student will solve them
+
+Return this JSON:
+{
+  "concept_explanation": "How to approach and think about these exercise questions. What method or concept to use.",
+  "general_steps": ["Step 1 of the approach", "Step 2", "Step 3"],
+  "textbook_example": {
+    "question": "Pick the first exercise question and solve it completely",
+    "solution_steps": ["Step 1 with calculation", "Step 2", "Step 3"],
+    "final_answer": "The correct final answer"
+  },
+  "new_example": {
+    "question": "Create a similar but different question",
+    "solution_steps": ["Step by step solution"],
+    "final_answer": "Final answer"
+  },
+  "summary": "Key tip for solving all remaining questions in this exercise",
+  "practice_questions": []
+}"""
+
+        elif topic_type == "summary":
+            return base + """
+This is a CHAPTER SUMMARY topic. Your job is to:
+1. Give a teacher-style recap of everything covered in the chapter
+2. Highlight the most important points a student must remember
+3. Connect all concepts together
+
+Return this JSON:
+{
+  "concept_explanation": "Teacher-style recap of the entire chapter — what was covered and why it matters",
+  "general_steps": ["Most important point 1 to remember", "Most important point 2", "Most important point 3"],
+  "textbook_example": {
+    "question": "Most likely exam question from this chapter",
+    "solution_steps": ["How to answer it step by step"],
+    "final_answer": "The answer"
+  },
+  "new_example": {
+    "question": "Another important exam question",
+    "solution_steps": ["Step by step"],
+    "final_answer": "The answer"
+  },
+  "summary": "One final line — what is the most important thing from this chapter",
+  "practice_questions": ["Important revision question 1", "Important revision question 2", "Important revision question 3"]
+}"""
+
+        elif topic_type == "proof":
             return base + """
 This topic is a MATHEMATICAL PROOF. Explain the proof clearly step by step.
 
@@ -201,13 +253,44 @@ Return this JSON:
     # ── SCIENCE prompts ────────────────────────────────────────────────────────
     else:
 
-        if topic_type == "activity":
+        if topic_type == "exercise":
+            return base + """
+This is an EXERCISE topic. Your job is to:
+1. Explain how to approach and think about these questions
+2. Show ONE fully solved example
+3. Do NOT solve all questions — student will solve them
+
+Return this JSON:
+{
+  "concept_explanation": "How to approach these exercise questions. What concepts to apply and how to think.",
+  "key_points": ["Approach point 1", "Approach point 2", "Common mistake to avoid"],
+  "textbook_example": "Pick the first exercise question and show how to answer it completely",
+  "real_life_application": "Why understanding this topic is useful in real life",
+  "summary": "Key tip for answering all remaining questions in this exercise",
+  "practice_questions": []
+}"""
+
+        elif topic_type == "summary":
+            return base + """
+This is a CHAPTER SUMMARY topic. Give a teacher-style recap of the entire chapter.
+
+Return this JSON:
+{
+  "concept_explanation": "Teacher-style recap of the entire chapter — all topics covered and their connections",
+  "key_points": ["Most important point 1 to remember for exam", "Most important point 2", "Most important point 3"],
+  "textbook_example": "Most likely exam question from this chapter with a clear answer",
+  "real_life_application": "How the concepts in this chapter connect to real life",
+  "summary": "One final line — the single most important takeaway from this chapter",
+  "practice_questions": ["Important revision question 1", "Important revision question 2", "Important revision question 3"]
+}"""
+
+        elif topic_type == "activity":
             return base + """
 This topic contains a SCIENCE ACTIVITY or experiment. Explain what happens and why.
 
 Return this JSON:
 {
-  "concept_explanation": "What concept this activity demonstrates and what happens",
+  "concept_explanation": "What concept this activity demonstrates and what happens during it",
   "key_points": ["Observation 1", "Observation 2", "What it proves"],
   "textbook_example": "What happens in this activity step by step",
   "real_life_application": "Where we see this phenomenon in daily life",
@@ -279,18 +362,14 @@ def explain_topic(data: ExplainRequest):
         else "Respond in English."
     )
 
-    # detect topic type from block types
+    # detect topic type
     topic_type = detect_topic_type(block_types)
-
-    # exercise/summary — no AI needed
-    if topic_type == "skip":
-        return JSONResponse(content={"explanation": get_fallback(subject_type), "skip": True})
-
-    # check if topic has images — so AI can reference them
     has_images = "image" in block_types
 
-    # build right prompt for this topic type
-    system_prompt = build_system_prompt(subject_type, topic_type, lang_instruction, has_images)
+    # build right prompt
+    system_prompt = build_system_prompt(
+        subject_type, topic_type, lang_instruction, has_images
+    )
 
     try:
         completion = client.chat.completions.create(
