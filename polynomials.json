@@ -1,0 +1,220 @@
+{
+  "class": "10",
+  "subject": "maths",
+  "chapter": "Polynomials",
+  "topics": [
+
+    {
+      "id": "intro",
+      "title": "Introduction",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "A polynomial in one variable x is an expression of the form a₀ + a₁x + a₂x² + ... + aₙxⁿ, where a₀, a₁, a₂,... are real numbers and n is a non-negative integer."
+        },
+        {
+          "type": "theory",
+          "text": "The highest power of x in a polynomial is called its degree. Based on degree, polynomials can be classified as linear (degree 1), quadratic (degree 2), cubic (degree 3), etc."
+        }
+      ]
+    },
+
+    {
+      "id": "geometrical-zeroes",
+      "title": "Geometrical Meaning of Zeroes of a Polynomial",
+      "blocks": [
+
+        {
+          "type": "theory",
+          "text": "The zeroes of a polynomial are the x-coordinates of the points where the graph of the polynomial intersects the x-axis."
+        },
+
+        {
+          "type": "theory",
+          "text": "Consider the linear polynomial y = 2x + 3. To draw its graph, we first prepare a table of values."
+        },
+
+        {
+          "type": "table",
+          "headers": ["x", "-2", "2"],
+          "rows": [
+            ["y = 2x + 3", "-1", "7"]
+          ]
+        },
+
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Fpolynomials%2Ffig_2_1.png?alt=media&token=f1d88e43-12a8-418d-8bea-bcc80fd99042",
+          "caption": "Figure 2.1 – Graph of y = 2x + 3"
+        },
+
+        {
+          "type": "theory",
+          "text": "From the graph, we observe that the line intersects the x-axis at x = -3/2. Therefore, the zero of the polynomial 2x + 3 is -3/2."
+        },
+
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Fpolynomials%2Ffig_2_2.png?alt=media&token=a04fbc80-d58f-472b-97a7-fa6432842b0d",
+          "caption": "Figure 2.2 – Quadratic polynomial intersecting x-axis at two points"
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Fpolynomials%2Ffig_2_3.png?alt=media&token=289e445a-a8be-4ca6-8f51-105620f2b5cb",
+          "caption": "Figure 2.3 – Quadratic polynomial touching x-axis at one point"
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Fpolynomials%2Ffig_2_4.png?alt=media&token=cd90c457-9ce9-461b-81fe-14a0e11672d4",
+          "caption": "Figure 2.4 – Quadratic polynomial not intersecting x-axis"
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Fpolynomials%2Ffig_2_5.png?alt=media&token=7576f5f2-3bb9-4833-a3dc-c6502e92f888",
+          "caption": "Figure 2.5 – Cubic polynomial with one zero"
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Fpolynomials%2Ffig_2_6.png?alt=media&token=5693e8a0-664e-42b6-8535-72f4559f88d6",
+          "caption": "Figure 2.6 – Cubic polynomial with two zeroes"
+        },
+        {
+          "type": "image",
+          "url": "https://firebasestorage.googleapis.com/v0/b/learnova-f92fd.firebasestorage.app/o/media%2Fclass10%2Fmaths%2Fpolynomials%2Ffig_2_7.png?alt=media&token=c691ffb4-2d39-4397-8164-b98dfee06b20",
+          "caption": "Figure 2.7 – Cubic polynomial with three zeroes"
+        }
+
+      ]
+    },
+
+    {
+      "id": "relation-zeroes",
+      "title": "Relationship between Zeroes and Coefficients",
+      "blocks": [
+
+        {
+          "type": "theory",
+          "text": "If α and β are zeroes of a quadratic polynomial ax² + bx + c, then:"
+        },
+        {
+          "type": "formula",
+          "latex": "\\alpha + \\beta = -\\frac{b}{a}",
+          "description": "Sum of zeroes (Quadratic)"
+        },
+        {
+          "type": "formula",
+          "latex": "\\alpha \\beta = \\frac{c}{a}",
+          "description": "Product of zeroes (Quadratic)"
+        },
+
+        {
+          "type": "theory",
+          "text": "If α, β and γ are zeroes of a cubic polynomial ax³ + bx² + cx + d, then:"
+        },
+        {
+          "type": "formula",
+          "latex": "\\alpha + \\beta + \\gamma = -\\frac{b}{a}",
+          "description": "Sum of zeroes (Cubic)"
+        },
+        {
+          "type": "formula",
+          "latex": "\\alpha\\beta + \\beta\\gamma + \\gamma\\alpha = \\frac{c}{a}",
+          "description": "Sum of product of zeroes taken two at a time"
+        },
+        {
+          "type": "formula",
+          "latex": "\\alpha\\beta\\gamma = -\\frac{d}{a}",
+          "description": "Product of zeroes (Cubic)"
+        },
+
+        {
+          "type": "example",
+          "label": "Example 1",
+          "question": "Find the quadratic polynomial whose zeroes are 2 and −3.",
+          "solution": "Sum = 2 + (−3) = −1. Product = 2 × (−3) = −6. Required polynomial = x² − (sum)x + product = x² + x − 6."
+        }
+      ]
+    },
+
+    {
+      "id": "division-algorithm",
+      "title": "Division Algorithm for Polynomials",
+      "blocks": [
+        {
+          "type": "theory",
+          "text": "For any two polynomials p(x) and g(x), where g(x) ≠ 0, there exist unique polynomials q(x) and r(x) such that:"
+        },
+        {
+          "type": "formula",
+          "latex": "p(x) = g(x)q(x) + r(x)",
+          "description": "Division Algorithm"
+        },
+        {
+          "type": "theory",
+          "text": "The degree of remainder r(x) is always less than the degree of g(x)."
+        },
+        {
+          "type": "example",
+          "label": "Example 2",
+          "question": "Divide 3x³ − 5x² − 4x + 4 by x − 2.",
+          "solution": "Using long division, quotient = 3x² + x − 2 and remainder = 0."
+        }
+      ]
+    },
+
+    {
+      "id": "exercise-2-1",
+      "title": "Exercise 2.1",
+      "blocks": [
+        {
+          "type": "exercise",
+          "questions": [
+            "The graph of y = p(x) is given. Find the number of zeroes of p(x).",
+            "Find the zeroes of the polynomial x² − 2.",
+            "Find the zeroes of 4x² − 4x − 3."
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "exercise-2-2",
+      "title": "Exercise 2.2",
+      "blocks": [
+        {
+          "type": "exercise",
+          "questions": [
+            "Find the quadratic polynomial whose zeroes are 2 and −3.",
+            "Find a cubic polynomial whose zeroes are 1, −1 and 2."
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "exercise-2-3",
+      "title": "Exercise 2.3",
+      "blocks": [
+        {
+          "type": "exercise",
+          "questions": [
+            "Verify the relationship between zeroes and coefficients for x² − 7x + 10.",
+            "Verify division algorithm for p(x) = x³ − 3x² + 3x − 1 and g(x) = x − 1."
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "summary",
+      "title": "Chapter Summary",
+      "blocks": [
+        {
+          "type": "summary",
+          "text": "A polynomial has degree equal to the highest power of x. The zeroes of a polynomial are the x-coordinates where its graph intersects the x-axis. The relationship between zeroes and coefficients helps in forming polynomials. The division algorithm states that p(x) = g(x)q(x) + r(x), where the degree of r(x) is less than the degree of g(x)."
+        }
+      ]
+    }
+
+  ]
+}

@@ -119,8 +119,10 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       menuTile(Icons.menu_book, "Subjects",
                               () => Navigator.pushNamed(context, "/subjects")),
-                      menuTile(Icons.psychology, "AI Assistant", () {}),
-                      menuTile(Icons.edit_document, "Tests", () {}),
+                      menuTile(Icons.psychology, "AI Assistant",
+                              () => Navigator.pushNamed(context, "/assistant")),
+                      menuTile(Icons.edit_document, "Tests",
+                              () => Navigator.pushNamed(context, "/tests")),
                       menuTile(Icons.show_chart, "Progress", () {}),
                     ],
                   ),

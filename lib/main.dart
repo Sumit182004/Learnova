@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:learnova/TestSeriesScreen.dart';
 import 'package:learnova/admin_dashboard.dart';
 import 'package:learnova/profile_page.dart';
 import 'package:learnova/subject_screen.dart';
-import 'login_screen.dart';
-import 'signup_screen.dart';
-import 'home_screen.dart';
+import 'AiAssistantScreen.dart';
+import 'login_page.dart';
+import 'signup_page.dart';
+import 'home_page.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -33,6 +35,8 @@ class LernovaApp extends StatelessWidget {
         "/profile": (context) => const ProfilePage(),
         "/admin": (context) =>  AdminDashboard(),
         "/subjects": (_) => SubjectsScreen(),
+        "/assistant": (context) => const AiAssistantScreen(),
+        "/tests": (context) => const TestSeriesScreen(),
       },
     );
   }
