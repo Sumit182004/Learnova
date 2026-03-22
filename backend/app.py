@@ -419,6 +419,7 @@ If diagrams are mentioned, reference them naturally in your explanation.
 def health_check():
     return {"status": "ok", "service": "Learnova AI Backend"}
 
+
 # ── Chat request model ─────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
@@ -447,9 +448,9 @@ def chat_with_novie(data: ChatRequest):
     system_prompt = f"""
 You are Novie, a friendly and helpful AI assistant for {standard_display} students in India.
 You help students understand their NCERT syllabus topics.
- 
+
 {lang_instruction}
- 
+
 YOUR RULES:
 1. Only answer questions related to {standard_display} NCERT syllabus:
    - Mathematics
@@ -498,3 +499,279 @@ YOUR RULES:
         return JSONResponse(
             content={"reply": "Sorry, I'm having trouble right now. Please try again!"}
         )
+
+
+# ── Test Generation Request ────────────────────────────────────────────────────
+class GenerateTestRequest(BaseModel):
+    chapter: str
+    subject: str
+    standard: str
+    content: str          # chapter JSON content as text
+    num_questions: int | None = 5
+    language: str | None = "english"
+
+
+# ── Answer Evaluation Request ──────────────────────────────────────────────────
+class EvaluateRequest(BaseModel):
+    question: str
+    model_answer: str
+    student_answer: str
+    marks: int
+    subject: str
+    word_limit: int | None = 100
+
+
+# ── Time limit calculator ──────────────────────────────────────────────────────
+def calculate_time_limit(subject_type: str, num_questions: int) -> int:
+    if subject_type == "maths":
+        return num_questions * 2
+    return num_questions * 6
+
+
+# ── /generate_test endpoint ────────────────────────────────────────────────────
+@app.post("/generate_test")
+def generate_test(data: GenerateTestRequest):
+
+    subject_type = normalize_subject(data.subject or "science")
+    lang         = (data.language or "english").strip().lower()
+    num_q        = data.num_questions or 5
+    standard     = data.standard or "class10"
+    time_limit   = calculate_time_limit(subject_type, num_q)
+
+    lang_instruction = (
+        "Respond in Hindi (Devanagari script)."
+        if lang == "hindi"
+        else "Respond in English."
+    )
+
+    # ── Maths MCQ generation ───────────────────────────────────────────────────
+    if subject_type == "maths":
+        system_prompt = f"""
+You are an expert Indian Mathematics teacher creating a chapter test for {standard} students.
+
+{lang_instruction}
+
+STRICT RULES:
+- Generate exactly {num_q} MCQ questions from the chapter content provided.
+- Each question must have exactly 4 options (A, B, C, D).
+- Only ONE option must be correct.
+- Questions must be based ONLY on the chapter content provided.
+- All calculations must be correct.
+- Return ONLY valid JSON. No markdown. No text outside JSON.
+
+Return strictly this JSON:
+{{
+  "questions": [
+    {{
+      "id": 1,
+      "question": "Question text here",
+      "options": {{
+        "A": "Option A",
+        "B": "Option B", 
+        "C": "Option C",
+        "D": "Option D"
+      }},
+      "correct_option": "A",
+      "marks": 1,
+      "explanation": "Why this answer is correct"
+    }}
+  ],
+  "total_marks": {num_q},
+  "time_limit_minutes": {time_limit},
+  "subject": "{data.subject}",
+  "chapter": "{data.chapter}",
+  "standard": "{standard}"
+}}"""
+
+    # ── Science written question generation ────────────────────────────────────
+    else:
+        system_prompt = f"""
+You are an expert Indian Science teacher creating a chapter test for {standard} students.
+
+{lang_instruction}
+
+STRICT RULES:
+- Generate exactly {num_q} theory/written questions from the chapter content provided.
+- Questions must test understanding — not just memorization.
+- Each question must have a model answer.
+- Word limit for student answers: 100 words per question.
+- Marks per question: 5 marks.
+- Questions must be based ONLY on the chapter content provided.
+- Return ONLY valid JSON. No markdown. No text outside JSON.
+
+Return strictly this JSON:
+{{
+  "questions": [
+    {{
+      "id": 1,
+      "question": "Question text here",
+      "model_answer": "Complete model answer here",
+      "marks": 5,
+      "word_limit": 100,
+      "key_concepts": ["concept1", "concept2"]
+    }}
+  ],
+  "total_marks": {num_q * 5},
+  "time_limit_minutes": {time_limit},
+  "subject": "{data.subject}",
+  "chapter": "{data.chapter}",
+  "standard": "{standard}"
+}}"""
+
+    try:
+        completion = client.chat.completions.create(
+            model="meta-llama/Meta-Llama-3-70B-Instruct:featherless-ai",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": f"""
+Chapter: {data.chapter}
+Subject: {data.subject}
+Standard: {standard}
+
+Chapter content:
+{data.content}
+
+Generate {num_q} questions based on this content only.
+"""
+                }
+            ],
+            temperature=0.3,
+            max_tokens=2000,
+            response_format={"type": "json_object"}
+        )
+
+        raw    = completion.choices[0].message.content
+        parsed = json.loads(raw)
+        return JSONResponse(content={"test": parsed})
+
+    except json.JSONDecodeError as e:
+        print("Test generation JSON error:", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to generate test. Please retry."}
+        )
+    except Exception as e:
+        print("Test generation error:", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to generate test. Please retry."}
+        )
+
+
+# ── /evaluate_answer endpoint ──────────────────────────────────────────────────
+@app.post("/evaluate_answer")
+def evaluate_answer(data: EvaluateRequest):
+
+    # count words in student answer
+    word_count   = len(data.student_answer.strip().split())
+    within_limit = word_count <= (data.word_limit or 100)
+
+    system_prompt = f"""
+You are an expert Indian Science teacher evaluating a student's written answer.
+
+Evaluate the student answer against the model answer using these 5 parameters:
+
+1. CONCEPT SIMILARITY (0 to 2 marks)
+   - Does the student understand the core concept correctly?
+   - 2 = fully correct, 1 = partially correct, 0 = incorrect/missing
+
+2. TOPIC RELEVANCE (0 to 1 mark)
+   - Is the answer actually about the question asked?
+   - 1 = relevant, 0 = off-topic or irrelevant
+
+3. KEYWORD COVERAGE (0 to 1 mark)
+   - Are important scientific terms/keywords mentioned?
+   - 1 = good coverage, 0 = missing important terms
+
+4. COMPLETENESS (0 to 1 mark)
+   - Did the student cover all required parts of the answer?
+   - 1 = complete, 0 = incomplete
+
+5. WORD LIMIT (0 to 1 mark)
+   - Word limit: {data.word_limit} words
+   - Student used: {word_count} words
+   - {"1 mark — within limit" if within_limit else "0 marks — exceeded limit"}
+
+Maximum raw score = 6 marks
+Scale to question marks = {data.marks} marks
+
+STRICT RULES:
+- Be fair but strict — partial credit for partial understanding
+- Return ONLY valid JSON. No markdown. No text outside JSON.
+
+Return this JSON:
+{{
+  "concept_similarity": 0-2,
+  "topic_relevance": 0-1,
+  "keyword_coverage": 0-1,
+  "completeness": 0-1,
+  "word_limit": 0-1,
+  "raw_score": 0-6,
+  "scaled_score": 0-{data.marks},
+  "word_count": {word_count},
+  "within_word_limit": {"true" if within_limit else "false"},
+  "feedback": "One line feedback for the student"
+}}"""
+
+    try:
+        completion = client.chat.completions.create(
+            model="meta-llama/Meta-Llama-3-70B-Instruct:featherless-ai",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": f"""
+Question: {data.question}
+
+Model Answer: {data.model_answer}
+
+Student Answer: {data.student_answer}
+
+Evaluate fairly based on the 5 parameters.
+"""
+                }
+            ],
+            temperature=0.1,
+            max_tokens=500,
+            response_format={"type": "json_object"}
+        )
+
+        raw    = completion.choices[0].message.content
+        parsed = json.loads(raw)
+        return JSONResponse(content={"evaluation": parsed})
+
+    except json.JSONDecodeError as e:
+        print("Evaluation JSON error:", str(e))
+        # safe fallback — give 0 marks on error
+        return JSONResponse(content={
+            "evaluation": {
+                "concept_similarity": 0,
+                "topic_relevance":    0,
+                "keyword_coverage":   0,
+                "completeness":       0,
+                "word_limit":         1 if within_limit else 0,
+                "raw_score":          1 if within_limit else 0,
+                "scaled_score":       0,
+                "word_count":         word_count,
+                "within_word_limit":  within_limit,
+                "feedback":           "Could not evaluate. Please retry."
+            }
+        })
+    except Exception as e:
+        print("Evaluation error:", str(e))
+        return JSONResponse(content={
+            "evaluation": {
+                "concept_similarity": 0,
+                "topic_relevance":    0,
+                "keyword_coverage":   0,
+                "completeness":       0,
+                "word_limit":         1 if within_limit else 0,
+                "raw_score":          0,
+                "scaled_score":       0,
+                "word_count":         word_count,
+                "within_word_limit":  within_limit,
+                "feedback":           "Could not evaluate. Please retry."
+            }
+        })
