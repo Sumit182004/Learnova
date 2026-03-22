@@ -1,3 +1,6 @@
+# Dart tool cache
+.dart_tool/
+
 # Flutter build files
 build/
 android/build/
