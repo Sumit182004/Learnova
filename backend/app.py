@@ -15,7 +15,6 @@ if not HF_TOKEN:
 
 app = FastAPI()
 
-# FIX: CORS middleware — required for Flutter web and cross-origin requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,21 +33,236 @@ class ExplainRequest(BaseModel):
     topic: str
     content: str
     subject: str | None = "science"
-    language: str | None = "english"   # FIX: language param added for Hindi support later
+    language: str | None = "english"
+    block_types: list[str] | None = []
 
 
-# ── Helper: normalize subject name ────────────────────────────────────────────
+# ── Normalize subject ──────────────────────────────────────────────────────────
 def normalize_subject(subject: str) -> str:
-    """
-    Accepts any variation admin might use:
-    maths, math, mathematics, science, science-i, science-ii,
-    science1, science2, physics, chemistry, biology
-    Returns: "maths" or "science"
-    """
     s = subject.strip().lower().replace(" ", "").replace("-", "")
     if s in ["maths", "math", "mathematics"]:
         return "maths"
-    return "science"   # everything else — science-i, science-ii, physics, chemistry, biology
+    return "science"
+
+
+# ── Detect topic type from block types ────────────────────────────────────────
+def detect_topic_type(block_types: list) -> str:
+    types = set(block_types)
+
+    # only exercise/summary — no AI needed
+    if types and types.issubset({"exercise", "summary"}):
+        return "skip"
+
+    # proof-based topic
+    if "proof" in types:
+        return "proof"
+
+    # formula-based topic
+    if "formula" in types and "example" in types and "proof" not in types:
+        return "formula"
+
+    # theorem-based topic
+    if "theorem" in types:
+        return "theorem"
+
+    # activity/experiment topic (science)
+    if "activity" in types:
+        return "activity"
+
+    # theory + example
+    if "example" in types and "theory" in types:
+        return "example_theory"
+
+    # pure theory
+    if "theory" in types:
+        return "theory"
+
+    return "general"
+
+
+# ── Build system prompt ────────────────────────────────────────────────────────
+def build_system_prompt(subject_type: str, topic_type: str, lang_instruction: str, has_images: bool) -> str:
+
+    # image instruction — added to ALL prompts if topic has images
+    # this tells AI to reference the diagram in its explanation
+    image_note = ""
+    if has_images:
+        image_note = """
+IMPORTANT: This topic has diagrams/figures shown to the student.
+When you see [Diagram present in textbook: ...] in the content:
+- Reference the diagram naturally in your explanation
+- Say things like "as shown in the diagram", "refer to the figure", "looking at the diagram above"
+- Connect your explanation to what the diagram shows
+"""
+
+    base = f"""You are an expert Indian {'Mathematics' if subject_type == 'maths' else 'Science'} teacher for Class 10 and Class 12 students.
+
+{lang_instruction}
+{image_note}
+STRICT RULES:
+- Base your explanation ONLY on the content provided.
+- Use simple, student-friendly language.
+- Return ONLY valid JSON. No markdown. No text outside JSON.
+- All calculations must be mathematically correct.
+- Use × for multiplication in maths.
+"""
+
+    # ── MATHS prompts ──────────────────────────────────────────────────────────
+    if subject_type == "maths":
+
+        if topic_type == "proof":
+            return base + """
+This topic is a MATHEMATICAL PROOF. Explain the proof clearly step by step.
+
+Return this JSON:
+{
+  "concept_explanation": "What we are trying to prove and why it matters",
+  "general_steps": ["Step 1 of proof logic", "Step 2", "Step 3"],
+  "textbook_example": {
+    "question": "State what is being proved",
+    "solution_steps": ["Each proof step explained simply"],
+    "final_answer": "Conclusion of the proof"
+  },
+  "new_example": {
+    "question": "A similar proof question",
+    "solution_steps": ["Step by step proof"],
+    "final_answer": "Conclusion"
+  },
+  "summary": "What was proved and the key idea behind it",
+  "practice_questions": ["Question 1", "Question 2", "Question 3"]
+}"""
+
+        elif topic_type == "formula":
+            return base + """
+This topic contains a FORMULA. Explain what it means and how to apply it.
+
+Return this JSON:
+{
+  "concept_explanation": "What this formula means and when to use it",
+  "general_steps": ["Step 1 to apply formula", "Step 2", "Step 3"],
+  "textbook_example": {
+    "question": "Example using the formula",
+    "solution_steps": ["Each calculation step clearly shown"],
+    "final_answer": "Correct final answer"
+  },
+  "new_example": {
+    "question": "Different example using same formula",
+    "solution_steps": ["Step by step calculation"],
+    "final_answer": "Correct final answer"
+  },
+  "summary": "When and how to use this formula",
+  "practice_questions": ["Question 1", "Question 2", "Question 3"]
+}"""
+
+        elif topic_type == "theorem":
+            return base + """
+This topic contains a THEOREM. Explain what it states and how to apply it.
+
+Return this JSON:
+{
+  "concept_explanation": "What the theorem states in simple words",
+  "general_steps": ["How to apply this theorem step by step"],
+  "textbook_example": {
+    "question": "Example applying the theorem",
+    "solution_steps": ["Each application step"],
+    "final_answer": "Final answer"
+  },
+  "new_example": {
+    "question": "Another example using the theorem",
+    "solution_steps": ["Step by step"],
+    "final_answer": "Final answer"
+  },
+  "summary": "The theorem in one line and its importance",
+  "practice_questions": ["Question 1", "Question 2", "Question 3"]
+}"""
+
+        else:
+            return base + """
+Explain this maths topic clearly with concept, steps and examples.
+
+Return this JSON:
+{
+  "concept_explanation": "Clear explanation of the concept",
+  "general_steps": ["Step 1", "Step 2", "Step 3"],
+  "textbook_example": {
+    "question": "Example question from the topic",
+    "solution_steps": ["Step by step solution"],
+    "final_answer": "Final answer"
+  },
+  "new_example": {
+    "question": "New example question",
+    "solution_steps": ["Step by step solution"],
+    "final_answer": "Final answer"
+  },
+  "summary": "Short summary of the concept",
+  "practice_questions": ["Question 1", "Question 2", "Question 3"]
+}"""
+
+    # ── SCIENCE prompts ────────────────────────────────────────────────────────
+    else:
+
+        if topic_type == "activity":
+            return base + """
+This topic contains a SCIENCE ACTIVITY or experiment. Explain what happens and why.
+
+Return this JSON:
+{
+  "concept_explanation": "What concept this activity demonstrates and what happens",
+  "key_points": ["Observation 1", "Observation 2", "What it proves"],
+  "textbook_example": "What happens in this activity step by step",
+  "real_life_application": "Where we see this phenomenon in daily life",
+  "summary": "What this activity taught us",
+  "practice_questions": ["Question 1", "Question 2", "Question 3"]
+}"""
+
+        elif topic_type == "formula":
+            return base + """
+This topic contains a CHEMICAL EQUATION or FORMULA. Explain what it represents.
+
+Return this JSON:
+{
+  "concept_explanation": "What this equation or formula represents and means",
+  "key_points": ["Key point 1 about this reaction", "Key point 2", "Key point 3"],
+  "textbook_example": "Example showing how to use or balance this equation",
+  "real_life_application": "Where this reaction or formula is seen in real life",
+  "summary": "What this formula or equation tells us",
+  "practice_questions": ["Question 1", "Question 2", "Question 3"]
+}"""
+
+        else:
+            return base + """
+Explain this science topic clearly.
+
+Return this JSON:
+{
+  "concept_explanation": "Clear explanation of the concept",
+  "key_points": ["Key point 1", "Key point 2", "Key point 3"],
+  "textbook_example": "A short example or application from this topic",
+  "real_life_application": "How this concept applies in real daily life",
+  "summary": "Short 2-3 line summary",
+  "practice_questions": ["Question 1", "Question 2", "Question 3"]
+}"""
+
+
+# ── Fallback ───────────────────────────────────────────────────────────────────
+def get_fallback(subject_type: str) -> dict:
+    if subject_type == "maths":
+        return {
+            "concept_explanation": "Could not load explanation. Please retry.",
+            "general_steps": [],
+            "textbook_example": {"question": "", "solution_steps": [], "final_answer": ""},
+            "new_example": {"question": "", "solution_steps": [], "final_answer": ""},
+            "summary": "Please retry.",
+            "practice_questions": []
+        }
+    return {
+        "concept_explanation": "Could not load explanation. Please retry.",
+        "key_points": [],
+        "textbook_example": "",
+        "real_life_application": "",
+        "summary": "Please retry.",
+        "practice_questions": []
+    }
 
 
 # ── /explain endpoint ──────────────────────────────────────────────────────────
@@ -56,76 +270,28 @@ def normalize_subject(subject: str) -> str:
 def explain_topic(data: ExplainRequest):
 
     subject_type = normalize_subject(data.subject or "science")
-    # FIX: language instruction in prompt
-    lang = (data.language or "english").strip().lower()
+    lang         = (data.language or "english").strip().lower()
+    block_types  = data.block_types or []
+
     lang_instruction = (
         "Respond in Hindi (Devanagari script)."
         if lang == "hindi"
         else "Respond in English."
     )
 
-    # ── Maths prompt ───────────────────────────────────────────────────────
-    if subject_type == "maths":
-        system_prompt = f"""
-You are an expert Indian Mathematics teacher for Class 10 and Class 12 students.
+    # detect topic type from block types
+    topic_type = detect_topic_type(block_types)
 
-{lang_instruction}
+    # exercise/summary — no AI needed
+    if topic_type == "skip":
+        return JSONResponse(content={"explanation": get_fallback(subject_type), "skip": True})
 
-STRICT INSTRUCTIONS:
-- Understand the topic carefully before explaining.
-- Show complete step-by-step solutions.
-- Perform internal verification of all calculations.
-- DO NOT show verification steps in output.
-- DO NOT include words like "Verify" or "Check".
-- Final answer must always be mathematically correct.
-- Use × symbol for multiplication.
-- Return ONLY valid JSON — no markdown, no explanation outside JSON.
+    # check if topic has images — so AI can reference them
+    has_images = "image" in block_types
 
-Return strictly this JSON format:
-{{
-  "concept_explanation": "Clear explanation of the concept in simple points",
-  "general_steps": ["Step 1", "Step 2", "Step 3"],
-  "textbook_example": {{
-    "question": "Example question from the topic",
-    "solution_steps": ["Step 1", "Step 2", "Step 3"],
-    "final_answer": "The final correct answer"
-  }},
-  "new_example": {{
-    "question": "A different example question on the same concept",
-    "solution_steps": ["Step 1", "Step 2", "Step 3"],
-    "final_answer": "The final correct answer"
-  }},
-  "summary": "Short 2-3 line summary of the concept",
-  "practice_questions": ["Question 1", "Question 2", "Question 3"]
-}}
-"""
+    # build right prompt for this topic type
+    system_prompt = build_system_prompt(subject_type, topic_type, lang_instruction, has_images)
 
-    # ── Science / Physics / Chemistry / Biology prompt ─────────────────────
-    else:
-        system_prompt = f"""
-You are an expert Indian Science teacher for Class 10 and Class 12 students.
-
-{lang_instruction}
-
-STRICT INSTRUCTIONS:
-- Explain the concept clearly and accurately.
-- Do not give false or made-up information.
-- Use simple student-friendly language.
-- Include real-life examples where possible.
-- Return ONLY valid JSON — no markdown, no explanation outside JSON.
-
-Return strictly this JSON format:
-{{
-  "concept_explanation": "Clear explanation of the concept",
-  "key_points": ["Point 1", "Point 2", "Point 3"],
-  "textbook_example": "A short example or application from the topic",
-  "real_life_application": "How this concept applies in real daily life",
-  "summary": "Short 2-3 line summary",
-  "practice_questions": ["Question 1", "Question 2", "Question 3"]
-}}
-"""
-
-    # ── Call HuggingFace model ─────────────────────────────────────────────
     try:
         completion = client.chat.completions.create(
             model="meta-llama/Meta-Llama-3-70B-Instruct:featherless-ai",
@@ -133,28 +299,28 @@ Return strictly this JSON format:
                 {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
-                    "content": f"""
-Subject: {data.subject}
+                    "content": f"""Subject: {data.subject}
 Topic: {data.topic}
+Topic Type: {topic_type}
 Language: {lang}
+Has Diagrams: {has_images}
 
 Content from textbook:
 {data.content}
 
-Explain this topic properly according to the content above.
-Do not assume fixed methods — base your explanation on the content provided.
+Explain this topic based on the content above.
+If diagrams are mentioned, reference them naturally in your explanation.
 """
                 }
             ],
             temperature=0.2,
-            max_tokens=1200,   # FIX: increased — was cutting off practice_questions
+            max_tokens=1500,
             response_format={"type": "json_object"}
         )
 
-        raw = completion.choices[0].message.content
+        raw    = completion.choices[0].message.content
         parsed = json.loads(raw)
 
-        # FIX: ensure practice_questions always exists in response
         if "practice_questions" not in parsed:
             parsed["practice_questions"] = []
 
@@ -162,46 +328,14 @@ Do not assume fixed methods — base your explanation on the content provided.
 
     except json.JSONDecodeError as e:
         print("JSON parse error:", str(e))
-        return JSONResponse(
-            status_code=500,
-            content={"error": "AI returned invalid JSON", "detail": str(e)}
-        )
+        return JSONResponse(content={"explanation": get_fallback(subject_type)})
 
     except Exception as e:
         print("AI Error:", str(e))
-
-        # ── Safe fallback so app never crashes ────────────────────────────
-        if subject_type == "maths":
-            fallback = {
-                "concept_explanation": "Could not load explanation. Please retry.",
-                "general_steps": [],
-                "textbook_example": {
-                    "question": "",
-                    "solution_steps": [],
-                    "final_answer": ""
-                },
-                "new_example": {
-                    "question": "",
-                    "solution_steps": [],
-                    "final_answer": ""
-                },
-                "summary": "Please retry.",
-                "practice_questions": []
-            }
-        else:
-            fallback = {
-                "concept_explanation": "Could not load explanation. Please retry.",
-                "key_points": [],
-                "textbook_example": "",
-                "real_life_application": "",
-                "summary": "Please retry.",
-                "practice_questions": []
-            }
-
-        return JSONResponse(content={"explanation": fallback})
+        return JSONResponse(content={"explanation": get_fallback(subject_type)})
 
 
-# ── Health check — Render will ping this to keep server warm ──────────────────
+# ── Health check ───────────────────────────────────────────────────────────────
 @app.get("/")
 def health_check():
     return {"status": "ok", "service": "Learnova AI Backend"}
