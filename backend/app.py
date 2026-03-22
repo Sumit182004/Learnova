@@ -418,3 +418,83 @@ If diagrams are mentioned, reference them naturally in your explanation.
 @app.get("/")
 def health_check():
     return {"status": "ok", "service": "Learnova AI Backend"}
+
+# ── Chat request model ─────────────────────────────────────────────────────────
+class ChatRequest(BaseModel):
+    message: str
+    standard: str | None = "class10"
+    chat_history: list[dict] | None = []
+    language: str | None = "english"
+
+
+# ── /chat endpoint ─────────────────────────────────────────────────────────────
+@app.post("/chat")
+def chat_with_novie(data: ChatRequest):
+
+    standard     = (data.standard or "class10").strip().lower()
+    lang         = (data.language or "english").strip().lower()
+    chat_history = data.chat_history or []
+
+    # display standard nicely
+    standard_display = "Class 10" if "10" in standard else "Class 12"
+
+    lang_instruction = (
+        "Respond in Hindi (Devanagari script)."
+        if lang == "hindi"
+        else "Respond in English."
+    )
+
+    system_prompt = f"""
+You are Novie, a friendly and helpful AI assistant for {standard_display} students in India.
+You help students understand their NCERT syllabus topics.
+ 
+{lang_instruction}
+ 
+YOUR RULES:
+1. Only answer questions related to {standard_display} NCERT syllabus:
+   - Mathematics
+   - Science (Physics, Chemistry, Biology)
+   - General academic concepts related to these subjects
+2. If a student asks something outside {standard_display} syllabus or non-academic:
+   - Politely say: "That's outside your {standard_display} syllabus. I can only help with your {standard_display} Maths and Science topics!"
+3. Keep answers clear, simple and student-friendly.
+4. Use examples wherever possible.
+5. Be encouraging and positive — like a good teacher.
+6. Keep responses concise — not too long, not too short.
+7. Never give wrong information — if unsure, say so honestly.
+8. Do NOT answer questions about other classes (if Class 10 student asks Class 12 topics, politely redirect).
+"""
+
+    # build messages with chat history for context
+    messages = [{"role": "system", "content": system_prompt}]
+
+    # add previous chat history (last 6 messages max to keep it fast)
+    for msg in chat_history[-6:]:
+        if msg.get("role") in ["user", "assistant"] and msg.get("content"):
+            messages.append({
+                "role":    msg["role"],
+                "content": msg["content"]
+            })
+
+    # add current message
+    messages.append({
+        "role":    "user",
+        "content": data.message
+    })
+
+    try:
+        completion = client.chat.completions.create(
+            model="meta-llama/Meta-Llama-3-70B-Instruct:featherless-ai",
+            messages=messages,
+            temperature=0.4,  # slightly higher than explain — more conversational
+            max_tokens=400,   # shorter responses for chat
+        )
+
+        reply = completion.choices[0].message.content.strip()
+        return JSONResponse(content={"reply": reply})
+
+    except Exception as e:
+        print("Chat AI Error:", str(e))
+        return JSONResponse(
+            content={"reply": "Sorry, I'm having trouble right now. Please try again!"}
+        )
