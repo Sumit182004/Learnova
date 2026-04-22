@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:learnova/video_player_widget..dart';
 import 'api_config.dart';
 
 class ExplanationScreen extends StatefulWidget {
@@ -45,7 +46,81 @@ class _ExplanationScreenState extends State<ExplanationScreen>
     super.initState();
     fetchExplanation();
   }
+  String? videoUrl;
+  bool generatingVideo = false;
 
+  Widget _buildAvatarSection() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFBAE9FF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          const Text(
+            "AI Teacher",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF081062),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          if (videoUrl != null)
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: VideoPlayerWidget(url: videoUrl!),
+            )
+          else
+            Column(
+              children: const [
+                CircularProgressIndicator(),
+                SizedBox(height: 10),
+                Text("AI Teacher is preparing your video..."),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+  Future<void> loadVideoIfExists() async {
+    final cached = await _getCachedVideo();
+    if (cached != null) {
+      setState(() => videoUrl = cached);
+    }
+  }
+  Future<void> generateAvatarVideo() async {
+    setState(() => generatingVideo = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse("${ApiConfig.baseUrl}/generate-avatar-video"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "topic": widget.topicTitle,
+          "language": "English",
+          "detail_level": "medium",
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      setState(() {
+        videoUrl = data["video_url"];
+        generatingVideo = false;
+      });
+
+    } catch (e) {
+      setState(() => generatingVideo = false);
+    }
+  }
   // ── safe helpers ───────────────────────────────────────────────────────────
   List<String> safeList(dynamic data) {
     if (data is List) return data.map((e) => e.toString()).toList();
@@ -61,7 +136,20 @@ class _ExplanationScreenState extends State<ExplanationScreen>
     if (data == null) return "";
     return data.toString();
   }
+  Future<String?> _getCachedVideo() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection("videos")
+          .doc(cacheKey)
+          .get();
 
+      if (doc.exists) {
+        return doc.data()?["video_url"];
+      }
+    } catch (_) {}
+
+    return null;
+  }
   // ── get block types ────────────────────────────────────────────────────────
   List<String> getBlockTypes() {
     final types = <String>{};
@@ -172,7 +260,51 @@ class _ExplanationScreenState extends State<ExplanationScreen>
       });
     } catch (_) {}
   }
+  Future<void> loadOrGenerateVideo() async {
+    try {
+      final res = await http.post(
+        Uri.parse("${ApiConfig.baseUrl}/generate-avatar-video"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "topic": widget.topicTitle,
+          "script": explanationData?["concept_explanation"] ?? "",
+        }),
+      );
 
+      final data = jsonDecode(res.body);
+      String videoId = data["video_id"];
+
+      // start polling
+      pollVideo(videoId);
+
+    } catch (e) {
+      debugPrint("Video error: $e");
+    }
+  }
+  Future<void> pollVideo(String videoId) async {
+    while (true) {
+      try {
+        final res = await http.get(
+          Uri.parse("${ApiConfig.baseUrl}/video-status/$videoId"),
+        );
+
+        final data = jsonDecode(res.body);
+
+        if (data["status"] == "completed") {
+          setState(() {
+            videoUrl = data["video_url"];
+          });
+          break;
+        }
+
+        await Future.delayed(const Duration(seconds: 3));
+
+      } catch (e) {
+        debugPrint("Polling error: $e");
+        break;
+      }
+    }
+  }
   // ── fetch ──────────────────────────────────────────────────────────────────
   Future<void> fetchExplanation() async {
     setState(() {
@@ -190,7 +322,12 @@ class _ExplanationScreenState extends State<ExplanationScreen>
         loading         = false;
         loadedFromCache = true;
       });
+
       startTeacherFlow();
+
+      // 👇 ADD THIS HERE
+      loadOrGenerateVideo();
+
       return;
     }
 
@@ -223,6 +360,7 @@ class _ExplanationScreenState extends State<ExplanationScreen>
 
       setState(() { explanationData = explanation; loading = false; });
       startTeacherFlow();
+      loadOrGenerateVideo();
 
     } catch (e) {
       setState(() { error = "Something went wrong. Please retry."; loading = false; });
@@ -563,6 +701,8 @@ class _ExplanationScreenState extends State<ExplanationScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _sectionTitle("Concept"),
+                if (visibleStep >= 1)
+                  _fadeIn(1, _buildAvatarSection()),
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(

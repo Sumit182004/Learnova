@@ -6,10 +6,23 @@ from openai import OpenAI
 import json
 import os
 from dotenv import load_dotenv
+import requests
+import time
+from fastapi import HTTPException
 
 load_dotenv()
 
 HF_TOKEN = os.getenv("HF_TOKEN")
+HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY")
+AVATAR_ID = os.getenv("HEYGEN_AVATAR_ID")
+VOICE_ID = os.getenv("HEYGEN_VOICE_ID")
+
+HEYGEN_HEADERS = {
+    "X-Api-Key": HEYGEN_API_KEY,
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+}
+
 if not HF_TOKEN:
     raise ValueError("HF_TOKEN not set in environment variables")
 
@@ -520,7 +533,66 @@ class EvaluateRequest(BaseModel):
     subject: str
     word_limit: int | None = 100
 
+def submit_heygen_job(script_text: str) -> str:
+    url = "https://api.heygen.com/v2/video/generate"
 
+    payload = {
+        "video_inputs": [
+            {
+                "character": {
+                    "type": "avatar",
+                    "avatar_id": AVATAR_ID,
+                    "avatar_style": "normal",
+                },
+                "voice": {
+                    "type": "text",
+                    "input_text": script_text,
+                    "voice_id": VOICE_ID,
+                },
+            }
+        ]
+    }
+
+    resp = requests.post(url, json=payload, headers=HEYGEN_HEADERS)
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=500, detail=resp.text)
+
+    return resp.json()["data"]["video_id"]
+# ───────── API FOR AVATAR VIDEO ─────────
+
+class AvatarRequest(BaseModel):
+    topic: str
+    script: str
+
+
+@app.post("/generate-avatar-video")
+def generate_avatar_video(data: AvatarRequest):
+
+    video_id = submit_heygen_job(data.script)
+
+
+    return {
+
+        "video_id": video_id,
+        "status": "processing",
+        "script": data.script,
+        "topic": data.topic,
+    }
+
+def poll_video(video_id: str):
+    url = f"https://api.heygen.com/v1/video_status.get?video_id={video_id}"
+
+    for _ in range(60):
+        r = requests.get(url, headers=HEYGEN_HEADERS)
+        data = r.json().get("data", {})
+
+        if data.get("status") == "completed":
+            return data.get("video_url")
+
+        time.sleep(3)
+
+    return None
 # ── Time limit calculator ──────────────────────────────────────────────────────
 def calculate_time_limit(subject_type: str, num_questions: int) -> int:
     if subject_type == "maths":
