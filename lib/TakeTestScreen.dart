@@ -16,12 +16,12 @@ class TakeTestScreen extends StatefulWidget {
   State<TakeTestScreen> createState() => _TakeTestScreenState();
 }
 
-class _TakeTestScreenState extends State<TakeTestScreen> {
+class _TakeTestScreenState extends State<TakeTestScreen>
+    with WidgetsBindingObserver {
 
   int    currentQuestion = 0;
   bool   isSubmitting    = false;
   bool   testAbandoned   = false;
-
   // timer
   late Timer  _timer;
   int         secondsLeft = 0;
@@ -43,8 +43,10 @@ class _TakeTestScreenState extends State<TakeTestScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _startTimer();
     // init controllers for written answers
+
     if (!isMaths) {
       for (int i = 0; i < questions.length; i++) {
         controllers[i] = TextEditingController();
@@ -54,12 +56,16 @@ class _TakeTestScreenState extends State<TakeTestScreen> {
 
   @override
   void dispose() {
-    _timer.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+
+
+
+    if (_timer.isActive) _timer.cancel();
     controllers.forEach((_, c) => c.dispose());
+
     super.dispose();
   }
-
-  // ── timer ──────────────────────────────────────────────────────────────────
+  // ── timer ───────
   void _startTimer() {
     final timeLimit = widget.test["time_limit_minutes"] ?? 15;
     secondsLeft = timeLimit * 60;
@@ -81,52 +87,51 @@ class _TakeTestScreenState extends State<TakeTestScreen> {
   }
 
   bool get isTimerWarning => secondsLeft <= 60;
+  @override
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
 
-  // ── back button warning ────────────────────────────────────────────────────
+      // 🚨 user left app → auto submit
+      if (!isSubmitting) {
+        _submitTest();
+      }
+    }
+  }
+  // ── back button warning ───
   Future<bool> _onWillPop() async {
+    if (isSubmitting) return false;
+
     final shouldExit = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber, color: Colors.orange),
-            SizedBox(width: 8),
-            Text("Leave Test?"),
-          ],
-        ),
+        title: const Text("Leave Test?"),
         content: const Text(
-          "If you leave now your test will be marked as incomplete and you will score 0.\n\nAre you sure you want to exit?",
+          "If you go back, your test will be submitted.",
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Continue Test",
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text("Stay"),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red),
-            child: const Text("Exit Test",
-                style: TextStyle(color: Colors.white)),
+            child: const Text("Submit & Exit"),
           ),
         ],
       ),
     );
 
     if (shouldExit == true) {
-      _timer.cancel();
-      // save score as 0
-      await _saveScore(0, abandoned: true);
-      return true;
+      await _submitTest();
     }
+
     return false;
   }
 
-  // ── auto submit when time runs out ─────────────────────────────────────────
+  // ── auto submit when time runs out ───────────
   Future<void> _autoSubmit() async {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -138,7 +143,7 @@ class _TakeTestScreenState extends State<TakeTestScreen> {
     await _submitTest();
   }
 
-  // ── submit test ────────────────────────────────────────────────────────────
+  // ── submit test ───────
   Future<void> _submitTest() async {
     _timer.cancel();
     setState(() => isSubmitting = true);
@@ -332,8 +337,7 @@ class _TakeTestScreenState extends State<TakeTestScreen> {
                         icon: const Icon(Icons.close,
                             color: Colors.white, size: 26),
                         onPressed: () async {
-                          final pop = await _onWillPop();
-                          if (pop && mounted) Navigator.pop(context);
+                          await _onWillPop();
                         },
                       ),
 
@@ -722,7 +726,7 @@ class _TakeTestScreenState extends State<TakeTestScreen> {
     );
   }
 
-  // ── confirm submit dialog ──────────────────────────────────────────────────
+  // ── confirm submit dialog ─
   void _confirmSubmit() {
     showDialog(
       context: context,

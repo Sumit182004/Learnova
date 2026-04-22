@@ -373,7 +373,7 @@ def explain_topic(data: ExplainRequest):
 
     try:
         completion = client.chat.completions.create(
-            model="meta-llama/Meta-Llama-3-70B-Instruct:featherless-ai",
+            model="meta-llama/Meta-Llama-3-8B-Instruct:featherless-ai",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {

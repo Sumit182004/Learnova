@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'api_config.dart';
-
-// ── Message model ──────────────────────────────────────────────────────────────
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+// ── Message model ────────────────────────────────
 class ChatMessage {
   final String text;
   final bool isUser;
@@ -28,12 +28,13 @@ class AiAssistantScreen extends StatefulWidget {
 class _AiAssistantScreenState extends State<AiAssistantScreen>
     with TickerProviderStateMixin {
 
+  late stt.SpeechToText _speech;
+  bool isListening = false;
   final TextEditingController _inputController  = TextEditingController();
   final ScrollController       _scrollController = ScrollController();
 
   List<ChatMessage> messages     = [];
   bool              isTyping     = false;
-  bool              isListening  = false; // kept for mic button UI state
   String            userStandard = "class10";
 
   // Novie bounce animation
@@ -43,6 +44,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen>
   @override
   void initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     _loadUserStandard();
     _setupAnimation();
     _addWelcomeMessage();
@@ -170,17 +172,33 @@ class _AiAssistantScreenState extends State<AiAssistantScreen>
 
   // ── voice input — coming soon ──────────────────────────────────────────────
   Future<void> _startListening() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Voice input coming soon!"),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    bool available = await _speech.initialize();
+
+    if (available) {
+      setState(() => isListening = true);
+
+      _speech.listen(
+        onResult: (result) {
+          setState(() {
+            _inputController.text = result.recognizedWords;
+          });
+        },
+      );
+    }
   }
 
-  Future<void> _stopListening() async {}
+  Future<void> _stopListening() async {
+    await _speech.stop();
 
-  // ── scroll to bottom ───────────────────────────────────────────────────────
+    setState(() => isListening = false);
+
+    //  send automatically after speaking
+    if (_inputController.text.trim().isNotEmpty) {
+      _sendMessage(_inputController.text);
+    }
+  }
+
+  // ── scroll to bottom ─────────────────────────────────────────
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 200), () {
       if (_scrollController.hasClients) {

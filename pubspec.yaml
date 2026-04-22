@@ -49,6 +49,7 @@ dependencies:
   # File Picker (stable, no Kotlin crash)
   file_picker: ^8.0.0
   cached_network_image: ^3.3.1
+  speech_to_text: ^7.0.0
 
   # HTTP
   http: ^1.1.0
