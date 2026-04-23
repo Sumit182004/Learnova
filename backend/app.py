@@ -431,7 +431,22 @@ If diagrams are mentioned, reference them naturally in your explanation.
 @app.get("/")
 def health_check():
     return {"status": "ok", "service": "Learnova AI Backend"}
+@app.get("/video-status/{video_id}")
+def check_video_status(video_id: str):
 
+    url = f"https://api.heygen.com/v1/video_status.get?video_id={video_id}"
+
+    resp = requests.get(url, headers=HEYGEN_HEADERS)
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=500, detail="HeyGen API failed")
+
+    data = resp.json().get("data", {})
+
+    return {
+        "status": data.get("status"),
+        "video_url": data.get("video_url"),
+    }
 
 # ── Chat request model ─────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):

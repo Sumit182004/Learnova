@@ -273,37 +273,50 @@ class _ExplanationScreenState extends State<ExplanationScreen>
 
       final data = jsonDecode(res.body);
       String videoId = data["video_id"];
-
+      print("VIDEO ID: $videoId");
       // start polling
       pollVideo(videoId);
+
 
     } catch (e) {
       debugPrint("Video error: $e");
     }
   }
   Future<void> pollVideo(String videoId) async {
-    while (true) {
+    int tries = 0;
+
+    while (tries < 40) { // max ~2 minutes
       try {
         final res = await http.get(
           Uri.parse("${ApiConfig.baseUrl}/video-status/$videoId"),
         );
-
+        print("VIDEO STATUS RESPONSE: ${res.body}");
         final data = jsonDecode(res.body);
+
+        print("VIDEO STATUS: $data");
 
         if (data["status"] == "completed") {
           setState(() {
             videoUrl = data["video_url"];
           });
-          break;
+          return;
+        }
+
+        if (data["status"] == "failed") {
+          print("Video generation failed");
+          return;
         }
 
         await Future.delayed(const Duration(seconds: 3));
+        tries++;
 
       } catch (e) {
-        debugPrint("Polling error: $e");
-        break;
+        print("Polling error: $e");
+        return;
       }
     }
+
+    print("Polling timeout");
   }
   // ── fetch ──────────────────────────────────────────────────────────────────
   Future<void> fetchExplanation() async {
