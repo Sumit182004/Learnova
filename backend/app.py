@@ -563,12 +563,23 @@ def submit_heygen_job(script_text: str) -> str:
                     "type": "text",
                     "input_text": script_text,
                     "voice_id": VOICE_ID,
+                    "speed": 1.0
                 },
+                "background": {
+                    "type": "color",
+                    "value": "#ffffff"
+                }
             }
-        ]
+        ],
+        "dimension": {
+            "width": 1280,
+            "height": 720
+        }
     }
 
     resp = requests.post(url, json=payload, headers=HEYGEN_HEADERS)
+
+    print("HEYGEN RESPONSE:", resp.text)  # 👈 ADD THIS
 
     if resp.status_code != 200:
         raise HTTPException(status_code=500, detail=resp.text)

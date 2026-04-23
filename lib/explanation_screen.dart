@@ -267,7 +267,11 @@ class _ExplanationScreenState extends State<ExplanationScreen>
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "topic": widget.topicTitle,
-          "script": explanationData?["concept_explanation"] ?? "",
+          "script": """
+            ${explanationData?["concept_explanation"] ?? ""}
+
+            ${explanationData?["summary"] ?? ""}
+          """
         }),
       );
 
